@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>💰 Finanças Família</title>
+  <style>
+    /* ============================================================
+       ESTILOS - Design pensado para celular (toque fácil)
+       ============================================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background: #f5f7fa;
+      padding: 16px 12px 100px 12px;
+      color: #1a1a2e;
+    }
+
+    /* Cabeçalho */
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      font-size: 22px;
+      color: #1a1a2e;
+    }
+    .header p {
+      font-size: 13px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    /* Cards de saldo */
+    .saldo-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .saldo-label {
+      font-size: 14px;
+      color: #666;
+    }
+    .saldo-valor {
+      font-size: 22px;
+      font-weight: bold;
+    }
+    .saldo-valor.verde { color: #2e7d32; }
+    .saldo-valor.vermelho { color: #c62828; }
+    .saldo-valor.azul { color: #0d47a1; }
+    .saldo-valor.laranja { color: #e65100; }
+
+    .btn-ajuste {
+      background: #f0f0f0;
+      border: none;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: #555;
+      cursor: pointer;
+    }
+
+    /* Barras de progresso (visual) */
+    .barra-container {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .barra-item {
+      margin-bottom: 10px;
+    }
+    .barra-item:last-child { margin-bottom: 0; }
+    .barra-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 3px;
+    }
+    .barra-bg {
+      width: 100%;
+      height: 18px;
+      background: #e9ecef;
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+    .barra-fill {
+      height: 100%;
+      border-radius: 20px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+    .barra-fill.verde { background: linear-gradient(90deg, #43a047, #66bb6a); }
+    .barra-fill.vermelho { background: linear-gradient(90deg, #e53935, #ef5350); }
+    .barra-fill.azul { background: linear-gradient(90deg, #1e88e5, #42a5f5); }
+    .barra-fill.laranja { background: linear-gradient(90deg, #f57c00, #ffa726); }
+
+    .barra-valor {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    /* Botões principais */
+    .botoes-acoes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 16px 0;
+    }
+    .botoes-acoes button {
+      padding: 14px 0;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      transition: transform 0.1s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .botoes-acoes button:active { transform: scale(0.97); }
+    .btn-entrada { background: #2e7d32; }
+    .btn-gasto { background: #c62828; }
+    .btn-investimento { background: #0d47a1; }
+    .btn-divida { background: #e65100; }
+
+    .botoes-secundarios {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 12px 0;
+    }
+    .botoes-secundarios button {
+      flex: 1;
+      min-width: 80px;
+      padding: 10px 0;
+      border: none;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      background: #e9ecef;
+      color: #333;
+      cursor: pointer;
+    }
+    .botoes-secundarios button:active { background: #d0d4d8; }
+
+    /* Lista de lançamentos */
+    .lista-titulo {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 20px 0 10px 0;
+      color: #1a1a2e;
+    }
+    .lancamento-item {
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .lancamento-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .lancamento-ident {
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .lancamento-meta {
+      font-size: 12px;
+      color: #888;
+    }
+    .lancamento-valor {
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .lancamento-valor.entrada { color: #2e7d32; }
+    .lancamento-valor.gasto { color: #c62828; }
+    .lancamento-valor.investimento { color: #0d47a1; }
+    .lancamento-valor.divida { color: #e65100; }
+
+    .lancamento-acoes button {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 0 4px;
+      color: #888;
+    }
+
+    /* Modais (pop-ups) */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 20px;
+    }
+    .modal-overlay.ativo { display: flex; }
+    .modal-box {
+      background: #fff;
+      border-radius: 20px;
+      max-width: 400px;
+      width: 100%;
+      padding: 24px 20px 20px 20px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-box h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .modal-box label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #555;
+      margin-top: 12px;
+    }
+    .modal-box input, .modal-box select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 16px;
+      margin-top: 4px;
+      background: #fafafa;
+    }
+    .modal-box input:focus, .modal-box select:focus {
+      outline: 2px solid #1a73e8;
+      border-color: transparent;
+    }
+    .modal-botoes {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .modal-botoes button {
+      flex: 1;
+      padding: 14px 0;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-confirmar { background: #1a73e8; color: #fff; }
+    .btn-cancelar { background: #e9ecef; color: #333; }
+    .btn-confirmar.verde { background: #2e7d32; }
+    .btn-confirmar.vermelho { background: #c62828; }
+    .btn-confirmar.azul { background: #0d47a1; }
+    .btn-confirmar.laranja { background: #e65100; }
+
+    .modal-box .campo-obrigatorio::after {
+      content: ' *';
+      color: #c62828;
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px 0;
+      color: #888;
+    }
+    .loading span {
+      display: inline-block;
+      animation: pulse 1.4s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    /* Scroll suave */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+
+    /* Responsivo */
+    @media (max-width: 380px) {
+      .botoes-acoes { grid-template-columns: 1fr 1fr; }
+      .header h1 { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+  ESTRUTURA HTML
+  ============================================================ -->
+
+  <div id="app">
+    <!-- Cabeçalho -->
+    <div class="header">
+      <h1>💰 Finanças da Família</h1>
+      <p>Atualizado em <span id="dataAtualizacao">--/--/----</span></p>
+    </div>
+
+    <!-- Saldo do Banco -->
+    <div class="saldo-card">
+      <span class="saldo-label">🏦 Saldo no Banco</span>
+      <div>
+        <span class="saldo-valor verde" id="saldoBanco">R$ 0,00</span>
+        <button class="btn-ajuste" id="btnAjustarSaldo">Ajustar</button>
+      </div>
+    </div>
+
+    <!-- Total Investimentos -->
+    <div class="saldo-card">
+      <span class="saldo-label">📈 Total em Investimentos</span>
+      <div>
+        <span class="saldo-valor azul" id="totalInvestimentos">R$ 0,00</span>
+        <button class="btn-ajuste" id="btnAjustarInvestimento">Ajustar</button>
+      </div>
+    </div>
+
+    <!-- Barras Visuais -->
+    <div class="barra-container">
+      <div class="barra-item">
+        <div class="barra-header">
+          <span>✅ Entradas (mês)</span>
+          <span class="barra-valor verde" id="barraEntradaValor">R$ 0</span>
+        </div>
+        <div class="barra-bg">
+          <div class="barra-fill verde" id="barraEntradaFill" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="barra-item">
+        <div class="barra-header">
+          <span>❌ Gastos (mês)</span>
+          <span class="barra-valor vermelho" id="barraGastoValor">R$ 0</span>
+        </div>
+        <div class="barra-bg">
+          <div class="barra-fill vermelho" id="barraGastoFill" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="barra-item">
+        <div class="barra-header">
+          <span>🔶 Dívidas (parcelas do mês)</span>
+          <span class="barra-valor laranja" id="barraDividaValor">R$ 0</span>
+        </div>
+        <div class="barra-bg">
+          <div class="barra-fill laranja" id="barraDividaFill" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="barra-item">
+        <div class="barra-header">
+          <span>📊 Investimentos (patrimônio)</span>
+          <span class="barra-valor azul" id="barraInvestimentoValor">R$ 0</span>
+        </div>
+        <div class="barra-bg">
+          <div class="barra-fill azul" id="barraInvestimentoFill" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botões de Ação -->
+    <div class="botoes-acoes">
+      <button class="btn-entrada" id="btnAddEntrada">➕ Entrada</button>
+      <button class="btn-gasto" id="btnAddGasto">💳 Gasto</button>
+      <button class="btn-investimento" id="btnAddInvestimento">📈 Investir</button>
+      <button class="btn-divida" id="btnAddDivida">🏦 Dívida</button>
+    </div>
+
+    <!-- Botões Secundários -->
+    <div class="botoes-secundarios">
+      <button id="btnPrevisoes">📅 Dívidas Previstas</button>
+      <button id="btnBackup">💾 Backup</button>
+      <button id="btnRestaurar">📂 Restaurar</button>
+      <button id="btnLimpar">🗑️ Limpar Tudo</button>
+    </div>
+
+    <!-- Lista de Lançamentos -->
+    <div class="lista-titulo">📋 Últimos Lançamentos</div>
+    <div id="listaLancamentos">
+      <div class="loading"><span>Carregando...</span></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+  MODAIS (POP-UPS)
+  ============================================================ -->
+
+  <!-- Modal Entrada -->
+  <div class="modal-overlay" id="modalEntrada">
+    <div class="modal-box">
+      <h2>➕ Adicionar Entrada</h2>
+      <label>Identificação <span class="campo-obrigatorio">*</span></label>
+      <input type="text" id="entradaIdent" placeholder="Ex: Salário Ana, Freela, ...">
+      
+      <label>Valor (R$) <span class="campo-obrigatorio">*</span></label>
+      <input type="number" step="0.01" id="entradaValor" placeholder="0,00">
+
+      <label>Recorrente?</label>
+      <select id="entradaRecorrente">
+        <option value="nao">Não (única)</option>
+        <option value="sim">Sim (todo mês)</option>
+      </select>
+
+      <div class="modal-botoes">
+        <button class="btn-cancelar" onclick="fecharModal('modalEntrada')">Cancelar</button>
+        <button class="btn-confirmar verde" id="btnConfirmarEntrada">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Gasto -->
+  <div class="modal-overlay" id="modalGasto">
+    <div class="modal-box">
+      <h2>💳 Adicionar Gasto</h2>
+      <label>Identificação <span class="campo-obrigatorio">*</span></label>
+      <input type="text" id="gastoIdent" placeholder="Ex: Mercado, Combustível, ...">
+      
+      <label>Valor (R$) <span class="campo-obrigatorio">*</span></label>
+      <input type="number" step="0.01" id="gastoValor" placeholder="0,00">
+
+      <label>Forma de Pagamento</label>
+      <select id="gastoForma">
+        <option value="Dinheiro">Dinheiro</option>
+        <option value="Cartão Débito">Cartão Débito</option>
+        <option value="Cartão Crédito">Cartão Crédito</option>
+        <option value="Cheque">Cheque</option>
+        <option value="PIX">PIX</option>
+      </select>
+
+      <label>Parcelas</label>
+      <select id="gastoParcelas">
+        <option value="1">À vista (1x)</option>
+        <option value="2">2x</option>
+        <option value="3">3x</option>
+        <option value="4">4x</option>
+        <option value="5">5x</option>
+        <option value="6">6x</option>
+        <option value="10">10x</option>
+        <option value="12">12x</option>
+        <option value="24">24x</option>
+        <option value="36">36x</option>
+        <option value="48">48x</option>
+        <option value="60">60x</option>
+      </select>
+
+      <div class="modal-botoes">
+        <button class="btn-cancelar" onclick="fecharModal('modalGasto')">Cancelar</button>
+        <button class="btn-confirmar vermelho" id="btnConfirmarGasto">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Investimento -->
+  <div class="modal-overlay" id="modalInvestimento">
+    <div class="modal-box">
+      <h2>📈 Adicionar Investimento</h2>
+      <label>Identificação <span class="campo-obrigatorio">*</span></label>
+      <input type="text" id="investIdent" placeholder="Ex: CDB, Ações, Tesouro, ...">
+      
+      <label>Valor Inicial (R$) <span class="campo-obrigatorio">*</span></label>
+      <input type="number" step="0.01" id="investValor" placeholder="0,00">
+
+      <label>Taxa de Rendimento (% ao mês)</label>
+      <input type="number" step="0.01" id="investTaxa" placeholder="Ex: 0.8 (para 0,8%)">
+
+      <div class="modal-botoes">
+        <button class="btn-cancelar" onclick="fecharModal('modalInvestimento')">Cancelar</button>
+        <button class="btn-confirmar azul" id="btnConfirmarInvestimento">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Dívida -->
+  <div class="modal-overlay" id="modalDivida">
+    <div class="modal-box">
+      <h2>🏦 Adicionar Dívida</h2>
+      <label>Identificação <span class="campo-obrigatorio">*</span></label>
+      <input type="text" id="dividaIdent" placeholder="Ex: Financiamento Casa, Carro, ...">
+      
+      <label>Valor da Parcela Mensal (R$) <span class="campo-obrigatorio">*</span></label>
+      <input type="number" step="0.01" id="dividaValor" placeholder="0,00">
+
+      <label>Meses Restantes <span class="campo-obrigatorio">*</span></label>
+      <input type="number" id="dividaMeses" placeholder="Ex: 36" min="1" max="360">
+
+      <div class="modal-botoes">
+        <button class="btn-cancelar" onclick="fecharModal('modalDivida')">Cancelar</button>
+        <button class="btn-confirmar laranja" id="btnConfirmarDivida">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ajustar Saldo -->
+  <div class="modal-overlay" id="modalAjustarSaldo">
+    <div class="modal-box">
+      <h2>✏️ Ajustar Saldo do Banco</h2>
+      <p style="color:#666;font-size:14px;margin-bottom:12px;">Digite o <strong>saldo atual correto</strong> do seu banco. O app criará um ajuste automático.</p>
+      <label>Novo Saldo (R$) <span class="campo-obrigatorio">*</span></label>
+      <input type="number" step="0.01" id="ajusteSaldoValor" placeholder="0,00">
+      
+      <label>Motivo (opcional)</label>
+      <input type="text" id="ajusteSaldoMotivo" placeholder="Ex: Taxa do banco, correção, ...">
+
+      <div class="modal-botoes">
+        <button class="btn-cancelar" onclick="fecharModal('modalAjustarSaldo')">Cancelar</button>
+        <button class="btn-confirmar" id="btnConfirmarAjusteSaldo">Aplicar Ajuste</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ajustar Investimento -->
+  <div class="modal-overlay" id="modalAjustarInvestimento">
+    <div class="modal-box">
+      <h2>✏️ Ajustar Investimento</h2>
+      <p style="color:#666;font-size:14px;margin-bottom:12px;">Digite o <strong>valor total atual</strong> do seu investimento. O app criará um ajuste automático.</p>
+      <label>Novo Total (R$) <span class="campo-obrigatorio">*</span></label>
+      <input type="number" step="0.01" id="ajusteInvestValor" placeholder="0,00">
+      
+      <label>Motivo (opcional)</label>
+      <input type="text" id="ajusteInvestMotivo" placeholder="Ex: Rendimento maior que o previsto">
+
+      <div class="modal-botoes">
+        <button class="btn-cancelar" onclick="fecharModal('modalAjustarInvestimento')">Cancelar</button>
+        <button class="btn-confirmar azul" id="btnConfirmarAjusteInvest">Aplicar Ajuste</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Confirmação (para entradas) -->
+  <div class="modal-overlay" id="modalConfirmacao">
+    <div class="modal-box">
+      <h2>✅ Confirmar Lançamento</h2>
+      <p id="confirmacaoMsg" style="font-size:16px;text-align:center;padding:12px 0;"></p>
+      <p style="font-size:13px;color:#888;text-align:center;">O saldo do banco ficará:</p>
+      <p id="confirmacaoSaldo" style="font-size:24px;font-weight:bold;text-align:center;color:#2e7d32;"></p>
+      <div class="modal-botoes">
+        <button class="btn-cancelar" id="btnConfirmacaoCorrigir">Corrigir</button>
+        <button class="btn-confirmar verde" id="btnConfirmacaoOk">Confirmar ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Previsão de Dívidas -->
+  <div class="modal-overlay" id="modalPrevisoes">
+    <div class="modal-box">
+      <h2>📅 Previsão de Dívidas</h2>
+      <div id="previsaoLista">
+        <p style="color:#888;text-align:center;padding:20px 0;">Carregando...</p>
+      </div>
+      <div class="modal-botoes">
+        <button class="btn-cancelar" onclick="fecharModal('modalPrevisoes')" style="flex:1;">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Backup/Restaurar (input file oculto) -->
+  <input type="file" id="fileInput" accept=".json" style="display:none;">
+
+  <!-- ============================================================
+  JAVASCRIPT - LÓGICA COMPLETA
+  ============================================================ -->
+
+  <script>
+    // ============================================================
+    // CONFIGURAÇÃO - URL DA API
+    // ============================================================
+    const API_URL = 'https://script.google.com/macros/s/AKfycb2GPIThKZ-OVnUS74pDqRBne0crn-11e6EouqjDvgRiYxZ5SjkW-UhtISGe8qQd/exec';
+
+    // ============================================================
+    // ESTADO GLOBAL
+    // ============================================================
+    let dados = [];
+    let saldoBanco = 0;
+    let totalInvestimentos = 0;
+
+    // ============================================================
+    // FUNÇÕES PRINCIPAIS
+    // ============================================================
+
+    async function carregarDados() {
+      try {
+        const response = await fetch(`${API_URL}?action=carregar`);
+        const result = await response.json();
+        
+        if (result.erro) {
+          alert('Erro ao carregar: ' + result.erro);
+          return;
+        }
+
+        dados = result.dados || [];
+        saldoBanco = result.saldo_banco || 0;
+        totalInvestimentos = result.total_investimentos || 0;
+
+        atualizarTela();
+      } catch (erro) {
+        console.error('Erro:', erro);
+        alert('Falha ao carregar dados. Verifique sua conexão e a URL da API.');
+      }
+    }
+
+    async function executarAcao(params) {
+      const url = new URL(API_URL);
+      Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+      
+      try {
+        const response = await fetch(url.toString());
+        const result = await response.json();
+        if (result.erro) {
+          alert('Erro: ' + result.erro);
+          return false;
+        }
+        await carregarDados();
+        return true;
+      } catch (erro) {
+        console.error('Erro:', erro);
+        alert('Falha ao executar ação. Verifique sua conexão.');
+        return false;
+      }
+    }
+
+    // ============================================================
+    // ATUALIZAR TELA
+    // ============================================================
+
+    function atualizarTela() {
+      // Data
+      document.getElementById('dataAtualizacao').textContent = new Date().toLocaleString('pt-BR');
+
+      // Saldo e Investimentos
+      document.getElementById('saldoBanco').textContent = formatarMoeda(saldoBanco);
+      document.getElementById('totalInvestimentos').textContent = formatarMoeda(totalInvestimentos);
+
+      // Calcular totais do mês
+      const mesAtual = getMesAtual();
+      let totalEntradas = 0;
+      let totalGastos = 0;
+      let totalDividas = 0;
+      let totalInvestimentosPatrimonio = 0;
+
+      dados.forEach(item => {
+        if (item.mes_referencia === mesAtual) {
+          if (item.tipo === 'entrada') totalEntradas += item.valor;
+          if (item.tipo === 'gasto') totalGastos += item.valor;
+          if (item.tipo === 'divida') totalDividas += item.valor;
+        }
+        if (item.tipo === 'investimento' || item.tipo === 'ajuste_investimento') {
+          totalInvestimentosPatrimonio += item.valor;
+        }
+        if (item.tipo === 'saque_investimento') {
+          totalInvestimentosPatrimonio -= item.valor;
+        }
+      });
+
+      // Máximo para as barras (baseado no maior valor)
+      const maxValor = Math.max(totalEntradas, totalGastos, totalDividas, totalInvestimentosPatrimonio, 1);
+
+      // Atualizar barras
+      atualizarBarra('barraEntradaValor', 'barraEntradaFill', totalEntradas, maxValor, 'verde');
+      atualizarBarra('barraGastoValor', 'barraGastoFill', totalGastos, maxValor, 'vermelho');
+      atualizarBarra('barraDividaValor', 'barraDividaFill', totalDividas, maxValor, 'laranja');
+      atualizarBarra('barraInvestimentoValor', 'barraInvestimentoFill', totalInvestimentosPatrimonio, maxValor, 'azul');
+
+      // Lista de lançamentos (últimos 50)
+      renderizarLista();
+    }
+
+    function atualizarBarra(valorId, fillId, valor, maximo, classe) {
+      document.getElementById(valorId).textContent = formatarMoeda(valor);
+      const percentual = maximo > 0 ? (valor / maximo) * 100 : 0;
+      const fill = document.getElementById(fillId);
+      fill.style.width = Math.min(percentual, 100) + '%';
+      fill.className = 'barra-fill ' + classe;
+    }
+
+    function renderizarLista() {
+      const container = document.getElementById('listaLancamentos');
+      if (dados.length === 0) {
+        container.innerHTML = '<p style="color:#888;text-align:center;padding:20px 0;">Nenhum lançamento ainda.</p>';
+        return;
+      }
+
+      // Ordenar por data (mais recente primeiro) e pegar os últimos 50
+      const recentes = [...dados]
+        .sort((a, b) => new Date(b.data) - new Date(a.data))
+        .slice(0, 50);
+
+      let html = '';
+      recentes.forEach(item => {
+        const corClasse = item.tipo === 'entrada' ? 'entrada' : 
+                          item.tipo === 'gasto' ? 'gasto' :
+                          item.tipo === 'divida' ? 'divida' :
+                          item.tipo === 'investimento' || item.tipo === 'ajuste_investimento' ? 'investimento' : '';
+        const sinal = item.tipo === 'entrada' || item.tipo === 'ajuste_saldo' || item.tipo === 'investimento' || item.tipo === 'ajuste_investimento' ? '+' : '-';
+        const meta = item.parcelas_total > 0 ? `Parcela ${item.parcela_atual}/${item.parcelas_total}` : '';
+        const mesRef = item.mes_referencia ? ` - ${item.mes_referencia}` : '';
+        
+        html += `
+          <div class="lancamento-item">
+            <div class="lancamento-info">
+              <span class="lancamento-ident">${item.identificacao || 'Sem nome'}</span>
+              <span class="lancamento-meta">${item.tipo} ${meta}${mesRef}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="lancamento-valor ${corClasse}">${sinal} ${formatarMoeda(item.valor)}</span>
+              <div class="lancamento-acoes">
+                <button onclick="editarItem('${item.id}')">✏️</button>
+                <button onclick="excluirItem('${item.id}')">🗑️</button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // ============================================================
+    // FUNÇÕES DE AÇÕES (CHAMADAS PELOS BOTÕES)
+    // ============================================================
+
+    function abrirModal(id) {
+      document.getElementById(id).classList.add('ativo');
+    }
+
+    function fecharModal(id) {
+      document.getElementById(id).classList.remove('ativo');
+    }
+
+    // Entrada
+    document.getElementById('btnAddEntrada').addEventListener('click', () => {
+      document.getElementById('entradaIdent').value = '';
+      document.getElementById('entradaValor').value = '';
+      abrirModal('modalEntrada');
+    });
+
+    document.getElementById('btnConfirmarEntrada').addEventListener('click', async () => {
+      const ident = document.getElementById('entradaIdent').value.trim();
+      const valor = parseFloat(document.getElementById('entradaValor').value);
+      
+      if (!ident || !valor || valor <= 0) {
+        alert('Preencha todos os campos corretamente.');
+        return;
+      }
+
+      // Verificar se quer confirmar
+      const novoSaldo = saldoBanco + valor;
+      document.getElementById('confirmacaoMsg').textContent = `Adicionar "${ident}" no valor de ${formatarMoeda(valor)}?`;
+      document.getElementById('confirmacaoSaldo').textContent = formatarMoeda(novoSaldo);
+      
+      fecharModal('modalEntrada');
+      
+      // Guardar dados temporários
+      window._tempEntrada = { ident, valor };
+      
+      abrirModal('modalConfirmacao');
+      
+      // Configurar ação de confirmação
+      document.getElementById('btnConfirmacaoOk').onclick = async () => {
+        fecharModal('modalConfirmacao');
+        const temp = window._tempEntrada;
+        await executarAcao({
+          action: 'adicionar_entrada',
+          identificacao: temp.ident,
+          valor: temp.valor
+        });
+      };
+      
+      document.getElementById('btnConfirmacaoCorrigir').onclick = () => {
+        fecharModal('modalConfirmacao');
+        abrirModal('modalEntrada');
+        document.getElementById('entradaValor').focus();
+      };
+    });
+
+    // Gasto
+    document.getElementById('btnAddGasto').addEventListener('click', () => {
+      document.getElementById('gastoIdent').value = '';
+      document.getElementById('gastoValor').value = '';
+      abrirModal('modalGasto');
+    });
+
+    document.getElementById('btnConfirmarGasto').addEventListener('click', async () => {
+      const ident = document.getElementById('gastoIdent').value.trim();
+      const valor = parseFloat(document.getElementById('gastoValor').value);
+      const forma = document.getElementById('gastoForma').value;
+      const parcelas = parseInt(document.getElementById('gastoParcelas').value);
+      
+      if (!ident || !valor || valor <= 0) {
+        alert('Preencha todos os campos corretamente.');
+        return;
+      }
+
+      fecharModal('modalGasto');
+      
+      const valorParcela = valor / parcelas;
+      let msg = `Adicionar "${ident}" no valor total de ${formatarMoeda(valor)}`;
+      if (parcelas > 1) {
+        msg += ` em ${parcelas}x de ${formatarMoeda(valorParcela)}`;
+      }
+      
+      document.getElementById('confirmacaoMsg').textContent = msg;
+      document.getElementById('confirmacaoSaldo').textContent = formatarMoeda(saldoBanco - valor);
+      
+      abrirModal('modalConfirmacao');
+      
+      document.getElementById('btnConfirmacaoOk').onclick = async () => {
+        fecharModal('modalConfirmacao');
+        await executarAcao({
+          action: 'adicionar_gasto',
+          identificacao: ident,
+          valor: valor,
+          forma_pagamento: forma,
+          parcelas: parcelas
+        });
+      };
+      
+      document.getElementById('btnConfirmacaoCorrigir').onclick = () => {
+        fecharModal('modalConfirmacao');
+        abrirModal('modalGasto');
+        document.getElementById('gastoValor').focus();
+      };
+    });
+
+    // Investimento
+    document.getElementById('btnAddInvestimento').addEventListener('click', () => {
+      document.getElementById('investIdent').value = '';
+      document.getElementById('investValor').value = '';
+      document.getElementById('investTaxa').value = '';
+      abrirModal('modalInvestimento');
+    });
+
+    document.getElementById('btnConfirmarInvestimento').addEventListener('click', async () => {
+      const ident = document.getElementById('investIdent').value.trim();
+      const valor = parseFloat(document.getElementById('investValor').value);
+      const taxa = parseFloat(document.getElementById('investTaxa').value) || 0;
+      
+      if (!ident || !valor || valor <= 0) {
+        alert('Preencha todos os campos corretamente.');
+        return;
+      }
+
+      fecharModal('modalInvestimento');
+      
+      document.getElementById('confirmacaoMsg').textContent = 
+        `Adicionar investimento "${ident}" com ${formatarMoeda(valor)} e taxa ${taxa}% ao mês?`;
+      document.getElementById('confirmacaoSaldo').textContent = formatarMoeda(totalInvestimentos + valor);
+      
+      abrirModal('modalConfirmacao');
+      
+      document.getElementById('btnConfirmacaoOk').onclick = async () => {
+        fecharModal('modalConfirmacao');
+        await executarAcao({
+          action: 'adicionar_investimento',
+          identificacao: ident,
+          valor: valor,
+          taxa: taxa
+        });
+      };
+      
+      document.getElementById('btnConfirmacaoCorrigir').onclick = () => {
+        fecharModal('modalConfirmacao');
+        abrirModal('modalInvestimento');
+        document.getElementById('investValor').focus();
+      };
+    });
+
+    // Dívida
+    document.getElementById('btnAddDivida').addEventListener('click', () => {
+      document.getElementById('dividaIdent').value = '';
+      document.getElementById('dividaValor').value = '';
+      document.getElementById('dividaMeses').value = '';
+      abrirModal('modalDivida');
+    });
+
+    document.getElementById('btnConfirmarDivida').addEventListener('click', async () => {
+      const ident = document.getElementById('dividaIdent').value.trim();
+      const valor = parseFloat(document.getElementById('dividaValor').value);
+      const meses = parseInt(document.getElementById('dividaMeses').value);
+      
+      if (!ident || !valor || valor <= 0 || !meses || meses <= 0) {
+        alert('Preencha todos os campos corretamente.');
+        return;
+      }
+
+      fecharModal('modalDivida');
+      
+      document.getElementById('confirmacaoMsg').textContent = 
+        `Adicionar dívida "${ident}" de ${formatarMoeda(valor)}/mês por ${meses} meses. Total: ${formatarMoeda(valor * meses)}`;
+      document.getElementById('confirmacaoSaldo').textContent = formatarMoeda(saldoBanco - valor);
+      
+      abrirModal('modalConfirmacao');
+      
+      document.getElementById('btnConfirmacaoOk').onclick = async () => {
+        fecharModal('modalConfirmacao');
+        await executarAcao({
+          action: 'adicionar_divida',
+          identificacao: ident,
+          valor_parcela: valor,
+          meses_restantes: meses
+        });
+      };
+      
+      document.getElementById('btnConfirmacaoCorrigir').onclick = () => {
+        fecharModal('modalConfirmacao');
+        abrirModal('modalDivida');
+        document.getElementById('dividaValor').focus();
+      };
+    });
+
+    // Ajustar Saldo
+    document.getElementById('btnAjustarSaldo').addEventListener('click', () => {
+      document.getElementById('ajusteSaldoValor').value = '';
+      document.getElementById('ajusteSaldoMotivo').value = '';
+      abrirModal('modalAjustarSaldo');
+    });
+
+    document.getElementById('btnConfirmarAjusteSaldo').addEventListener('click', async () => {
+      const valor = parseFloat(document.getElementById('ajusteSaldoValor').value);
+      const motivo = document.getElementById('ajusteSaldoMotivo').value.trim() || 'Correção de saldo';
+      
+      if (valor === undefined || isNaN(valor)) {
+        alert('Digite um valor válido.');
+        return;
+      }
+
+      fecharModal('modalAjustarSaldo');
+      
+      // Calcular a diferença
+      const diferenca = valor - saldoBanco;
+      
+      document.getElementById('confirmacaoMsg').textContent = 
+        `Ajustar saldo do banco de ${formatarMoeda(saldoBanco)} para ${formatarMoeda(valor)} (diferença: ${formatarMoeda(diferenca)})`;
+      document.getElementById('confirmacaoSaldo').textContent = formatarMoeda(valor);
+      
+      abrirModal('modalConfirmacao');
+      
+      document.getElementById('btnConfirmacaoOk').onclick = async () => {
+        fecharModal('modalConfirmacao');
+        await executarAcao({
+          action: 'ajustar_saldo',
+          valor: diferenca,
+          motivo: motivo
+        });
+      };
+      
+      document.getElementById('btnConfirmacaoCorrigir').onclick = () => {
+        fecharModal('modalConfirmacao');
+        abrirModal('modalAjustarSaldo');
+        document.getElementById('ajusteSaldoValor').focus();
+      };
+    });
+
+    // Ajustar Investimento
+    document.getElementById('btnAjustarInvestimento').addEventListener('click', () => {
+      document.getElementById('ajusteInvestValor').value = '';
+      document.getElementById('ajusteInvestMotivo').value = '';
+      abrirModal('modalAjustarInvestimento');
+    });
+
+    document.getElementById('btnConfirmarAjusteInvest').addEventListener('click', async () => {
+      const valor = parseFloat(document.getElementById('ajusteInvestValor').value);
+      const motivo = document.getElementById('ajusteInvestMotivo').value.trim() || 'Correção de investimento';
+      
+      if (valor === undefined || isNaN(valor) || valor < 0) {
+        alert('Digite um valor válido.');
+        return;
+      }
+
+      fecharModal('modalAjustarInvestimento');
+      
+      const diferenca = valor - totalInvestimentos;
+      
+      document.getElementById('confirmacaoMsg').textContent = 
+        `Ajustar investimento de ${formatarMoeda(totalInvestimentos)} para ${formatarMoeda(valor)} (diferença: ${formatarMoeda(diferenca)})`;
+      document.getElementById('confirmacaoSaldo').textContent = formatarMoeda(valor);
+      
+      abrirModal('modalConfirmacao');
+      
+      document.getElementById('btnConfirmacaoOk').onclick = async () => {
+        fecharModal('modalConfirmacao');
+        await executarAcao({
+          action: 'ajustar_investimento',
+          valor: diferenca,
+          motivo: motivo
+        });
+      };
+      
+      document.getElementById('btnConfirmacaoCorrigir').onclick = () => {
+        fecharModal('modalConfirmacao');
+        abrirModal('modalAjustarInvestimento');
+        document.getElementById('ajusteInvestValor').focus();
+      };
+    });
+
+    // Previsões
+    document.getElementById('btnPrevisoes').addEventListener('click', () => {
+      const mesAtual = getMesAtual();
+      const previsoes = dados.filter(item => 
+        (item.tipo === 'gasto' || item.tipo === 'divida') && 
+        item.mes_referencia >= mesAtual &&
+        item.parcela_atual <= item.parcelas_total
+      );
+
+      // Agrupar por mês
+      const grupos = {};
+      previsoes.forEach(item => {
+        if (!grupos[item.mes_referencia]) grupos[item.mes_referencia] = [];
+        grupos[item.mes_referencia].push(item);
+      });
+
+      const container = document.getElementById('previsaoLista');
+      const mesesOrdenados = Object.keys(grupos).sort();
+
+      if (mesesOrdenados.length === 0) {
+        container.innerHTML = '<p style="color:#888;text-align:center;padding:20px 0;">Nenhuma dívida ou parcela prevista.</p>';
+      } else {
+        let html = '';
+        mesesOrdenados.forEach(mes => {
+          const itens = grupos[mes];
+          const totalMes = itens.reduce((sum, i) => sum + i.valor, 0);
+          html += `<div style="margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:10px;">
+            <div style="font-weight:bold;font-size:15px;color:#e65100;">📅 ${mes} - Total: ${formatarMoeda(totalMes)}</div>`;
+          itens.forEach(item => {
+            html += `<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;">
+              <span>${item.identificacao} (${item.parcela_atual}/${item.parcelas_total})</span>
+              <span>${formatarMoeda(item.valor)}</span>
+            </div>`;
+          });
+          html += `</div>`;
+        });
+        container.innerHTML = html;
+      }
+
+      abrirModal('modalPrevisoes');
+    });
+
+    // Backup
+    document.getElementById('btnBackup').addEventListener('click', () => {
+      const data = {
+        versao: '1.0',
+        exportado_em: new Date().toISOString(),
+        dados: dados,
+        saldo_banco: saldoBanco,
+        total_investimentos: totalInvestimentos
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup_financas_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // Restaurar
+    document.getElementById('btnRestaurar').addEventListener('click', () => {
+      document.getElementById('fileInput').click();
+    });
+
+    document.getElementById('fileInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const data = JSON.parse(event.target.result);
+          if (!data.dados || !Array.isArray(data.dados)) {
+            alert('Arquivo inválido. Não contém dados.');
+            return;
+          }
+
+          // Confirmar restauração
+          if (!confirm(`Restaurar ${data.dados.length} lançamentos?\nATENÇÃO: Isso irá SUBSTITUIR todos os dados atuais.`)) {
+            return;
+          }
+
+          // Limpar tudo e restaurar
+          const limpar = await executarAcao({ action: 'limpar_tudo' });
+          if (limpar) {
+            // Recarregar dados
+            await carregarDados();
+            alert('Backup restaurado com sucesso!');
+          }
+        } catch (erro) {
+          alert('Erro ao ler o arquivo: ' + erro.message);
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = ''; // reset
+    });
+
+    // Limpar Tudo
+    document.getElementById('btnLimpar').addEventListener('click', async () => {
+      if (confirm('ATENÇÃO: Isso vai APAGAR TODOS os dados do app. Tem certeza?')) {
+        if (confirm('Última confirmação: Todos os lançamentos serão perdidos. Continuar?')) {
+          await executarAcao({ action: 'limpar_tudo' });
+          alert('Todos os dados foram removidos.');
+          await carregarDados();
+        }
+      }
+    });
+
+    // ============================================================
+    // FUNÇÕES DE EDIÇÃO E EXCLUSÃO
+    // ============================================================
+
+    function editarItem(id) {
+      const item = dados.find(d => d.id === id);
+      if (!item) {
+        alert('Item não encontrado.');
+        return;
+      }
+
+      const novoValor = prompt(`Editar valor de "${item.identificacao}" (atual: ${formatarMoeda(item.valor)}):`, item.valor);
+      if (novoValor === null) return;
+      
+      const valorNum = parseFloat(novoValor);
+      if (isNaN(valorNum) || valorNum < 0) {
+        alert('Valor inválido.');
+        return;
+      }
+
+      const novaIdent = prompt('Editar identificação:', item.identificacao);
+      if (novaIdent === null) return;
+      if (novaIdent.trim() === '') {
+        alert('Identificação não pode ser vazia.');
+        return;
+      }
+
+      executarAcao({
+        action: 'editar_lancamento',
+        id: id,
+        valor: valorNum,
+        identificacao: novaIdent.trim()
+      });
+    }
+
+    function excluirItem(id) {
+      if (confirm('Tem certeza que deseja excluir este lançamento?')) {
+        executarAcao({
+          action: 'excluir_lancamento',
+          id: id
+        });
+      }
+    }
+
+    // ============================================================
+    // FUNÇÕES AUXILIARES
+    // ============================================================
+
+    function formatarMoeda(valor) {
+      return valor.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      });
+    }
+
+    function getMesAtual() {
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    }
+
+    // ============================================================
+    // INICIALIZAR
+    // ============================================================
+
+    carregarDados();
+
+    // Recarregar a cada 60 segundos (para sincronizar entre usuários)
+    setInterval(carregarDados, 60000);
+
+    console.log('💰 App Financeiro Família carregado!');
+    console.log('🔗 Conectado à API:', API_URL);
+  </script>
+
+</body>
+</html>
