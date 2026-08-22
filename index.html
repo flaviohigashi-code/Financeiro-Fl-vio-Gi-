@@ -70,6 +70,40 @@
       cursor: pointer;
     }
 
+    /* Termômetro do saldo: zero marcado no 1º terço, verde à direita, vermelho à esquerda */
+    .termometro-bg {
+      position: relative;
+      width: 100%;
+      height: 16px;
+      background: #e9ecef;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .termometro-zero {
+      position: absolute;
+      left: 33.333%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #555;
+      z-index: 2;
+    }
+    .termometro-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      height: 100%;
+      border-radius: 20px;
+      transition: left 0.3s ease, width 0.3s ease, background 0.3s ease;
+    }
+    .termometro-fill.positivo {
+      background: linear-gradient(90deg, #66bb6a, #2e7d32);
+    }
+    .termometro-fill.negativo {
+      background: linear-gradient(90deg, #e53935, #c62828);
+    }
+
     /* Barras de progresso (visual) */
     .barra-container {
       background: #fff;
@@ -320,11 +354,17 @@
     </div>
 
     <!-- Saldo do Banco -->
-    <div class="saldo-card">
-      <span class="saldo-label">🏦 Saldo no Banco</span>
-      <div>
-        <span class="saldo-valor verde" id="saldoBanco">R$ 0,00</span>
-        <button class="btn-ajuste" id="btnAjustarSaldo">Ajustar</button>
+    <div class="saldo-card" style="flex-direction:column;align-items:stretch;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="saldo-label">🏦 Saldo no Banco</span>
+        <div>
+          <span class="saldo-valor verde" id="saldoBanco">R$ 0,00</span>
+          <button class="btn-ajuste" id="btnAjustarSaldo">Ajustar</button>
+        </div>
+      </div>
+      <div class="termometro-bg">
+        <div class="termometro-fill positivo" id="termometroFill" style="left:33.333%;width:0%;"></div>
+        <div class="termometro-zero"></div>
       </div>
     </div>
 
@@ -387,6 +427,7 @@
 
     <!-- Botões Secundários -->
     <div class="botoes-secundarios">
+      <button id="btnDividasMes">📆 Dívidas do Mês</button>
       <button id="btnPrevisoes">📅 Dívidas Previstas</button>
       <button id="btnBackup">💾 Backup</button>
       <button id="btnRestaurar">📂 Restaurar</button>
@@ -414,6 +455,9 @@
       <label>Valor (R$) <span class="campo-obrigatorio">*</span></label>
       <input type="number" step="0.01" id="entradaValor" placeholder="0,00">
 
+      <label>Data</label>
+      <input type="date" id="entradaData">
+
       <label>Recorrente?</label>
       <select id="entradaRecorrente">
         <option value="nao">Não (única)</option>
@@ -437,6 +481,9 @@
       <label>Valor (R$) <span class="campo-obrigatorio">*</span></label>
       <input type="number" step="0.01" id="gastoValor" placeholder="0,00">
 
+      <label>Data da compra</label>
+      <input type="date" id="gastoData">
+
       <label>Forma de Pagamento</label>
       <select id="gastoForma">
         <option value="Dinheiro">Dinheiro</option>
@@ -445,6 +492,14 @@
         <option value="Cheque">Cheque</option>
         <option value="PIX">PIX</option>
       </select>
+
+      <div id="gastoCartaoBloco" style="display:none;">
+        <label>Cartão</label>
+        <select id="gastoCartaoSelect">
+          <option value="">Selecione...</option>
+          <option value="__novo__">+ Cadastrar novo cartão</option>
+        </select>
+      </div>
 
       <label>Parcelas</label>
       <select id="gastoParcelas">
@@ -502,6 +557,9 @@
       <label>Meses Restantes <span class="campo-obrigatorio">*</span></label>
       <input type="number" id="dividaMeses" placeholder="Ex: 36" min="1" max="360">
 
+      <label>Data de início (1ª parcela)</label>
+      <input type="date" id="dividaData">
+
       <div class="modal-botoes">
         <button class="btn-cancelar" onclick="fecharModal('modalDivida')">Cancelar</button>
         <button class="btn-confirmar laranja" id="btnConfirmarDivida">Confirmar</button>
@@ -555,6 +613,19 @@
       <div class="modal-botoes">
         <button class="btn-cancelar" id="btnConfirmacaoCorrigir">Corrigir</button>
         <button class="btn-confirmar verde" id="btnConfirmacaoOk">Confirmar ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Dívidas do Mês -->
+  <div class="modal-overlay" id="modalDividasMes">
+    <div class="modal-box">
+      <h2>📆 Dívidas do Mês</h2>
+      <div id="dividasMesLista">
+        <p style="color:#888;text-align:center;padding:20px 0;">Carregando...</p>
+      </div>
+      <div class="modal-botoes">
+        <button class="btn-cancelar" onclick="fecharModal('modalDividasMes')" style="flex:1;">Fechar</button>
       </div>
     </div>
   </div>
@@ -646,7 +717,9 @@
       document.getElementById('dataAtualizacao').textContent = new Date().toLocaleString('pt-BR');
 
       // Saldo e Investimentos
-      document.getElementById('saldoBanco').textContent = formatarMoeda(saldoBanco);
+      const elSaldo = document.getElementById('saldoBanco');
+      elSaldo.textContent = formatarMoeda(saldoBanco);
+      elSaldo.className = 'saldo-valor ' + (saldoBanco >= 0 ? 'verde' : 'vermelho');
       document.getElementById('totalInvestimentos').textContent = formatarMoeda(totalInvestimentos);
 
       // Calcular totais do mês
@@ -673,6 +746,9 @@
       // Máximo para as barras (baseado no maior valor)
       const maxValor = Math.max(totalEntradas, totalGastos, totalDividas, totalInvestimentosPatrimonio, 1);
 
+      // Termômetro do saldo (escala baseada no fluxo mensal de entradas/saídas)
+      atualizarTermometro(saldoBanco, totalEntradas, totalGastos + totalDividas);
+
       // Atualizar barras
       atualizarBarra('barraEntradaValor', 'barraEntradaFill', totalEntradas, maxValor, 'verde');
       atualizarBarra('barraGastoValor', 'barraGastoFill', totalGastos, maxValor, 'vermelho');
@@ -691,15 +767,42 @@
       fill.className = 'barra-fill ' + classe;
     }
 
+    // Termômetro: zero fica no 1º terço da barra (33.333%).
+    // Positivo enche pra direita (2/3 da barra), negativo enche pra esquerda (1/3 da barra).
+    function atualizarTermometro(saldo, totalEntradasMes, totalSaidasMes) {
+      const fill = document.getElementById('termometroFill');
+      const ZERO = 33.333;
+
+      // Escala dinâmica baseada no fluxo mensal, com piso mínimo pra não ficar
+      // sensível demais quando ainda não há lançamentos.
+      const escalaPositiva = Math.max(totalEntradasMes * 1.5, 1000);
+      const escalaNegativa = Math.max(totalSaidasMes * 1.5, 1000);
+
+      if (saldo >= 0) {
+        const fracao = Math.min(saldo / escalaPositiva, 1);
+        fill.className = 'termometro-fill positivo';
+        fill.style.left = ZERO + '%';
+        fill.style.width = (fracao * (100 - ZERO)) + '%';
+      } else {
+        const fracao = Math.min(Math.abs(saldo) / escalaNegativa, 1);
+        const largura = fracao * ZERO;
+        fill.className = 'termometro-fill negativo';
+        fill.style.left = (ZERO - largura) + '%';
+        fill.style.width = largura + '%';
+      }
+    }
+
     function renderizarLista() {
       const container = document.getElementById('listaLancamentos');
-      if (dados.length === 0) {
+      const visiveis = dados.filter(d => d.tipo !== 'cartao');
+
+      if (visiveis.length === 0) {
         container.innerHTML = '<p style="color:#888;text-align:center;padding:20px 0;">Nenhum lançamento ainda.</p>';
         return;
       }
 
       // Ordenar por data (mais recente primeiro) e pegar os últimos 50
-      const recentes = [...dados]
+      const recentes = [...visiveis]
         .sort((a, b) => new Date(b.data) - new Date(a.data))
         .slice(0, 50);
 
@@ -749,12 +852,14 @@
     document.getElementById('btnAddEntrada').addEventListener('click', () => {
       document.getElementById('entradaIdent').value = '';
       document.getElementById('entradaValor').value = '';
+      document.getElementById('entradaData').value = getHojeISO();
       abrirModal('modalEntrada');
     });
 
     document.getElementById('btnConfirmarEntrada').addEventListener('click', async () => {
       const ident = document.getElementById('entradaIdent').value.trim();
       const valor = parseFloat(document.getElementById('entradaValor').value);
+      const data = document.getElementById('entradaData').value || getHojeISO();
       
       if (!ident || !valor || valor <= 0) {
         alert('Preencha todos os campos corretamente.');
@@ -763,13 +868,13 @@
 
       // Verificar se quer confirmar
       const novoSaldo = saldoBanco + valor;
-      document.getElementById('confirmacaoMsg').textContent = `Adicionar "${ident}" no valor de ${formatarMoeda(valor)}?`;
+      document.getElementById('confirmacaoMsg').textContent = `Adicionar "${ident}" no valor de ${formatarMoeda(valor)} em ${formatarDataBR(data)}?`;
       document.getElementById('confirmacaoSaldo').textContent = formatarMoeda(novoSaldo);
       
       fecharModal('modalEntrada');
       
       // Guardar dados temporários
-      window._tempEntrada = { ident, valor };
+      window._tempEntrada = { ident, valor, data };
       
       abrirModal('modalConfirmacao');
       
@@ -780,7 +885,8 @@
         await executarAcao({
           action: 'adicionar_entrada',
           identificacao: temp.ident,
-          valor: temp.valor
+          valor: temp.valor,
+          data: temp.data
         });
       };
       
@@ -795,7 +901,52 @@
     document.getElementById('btnAddGasto').addEventListener('click', () => {
       document.getElementById('gastoIdent').value = '';
       document.getElementById('gastoValor').value = '';
+      document.getElementById('gastoData').value = getHojeISO();
+      document.getElementById('gastoForma').value = 'Dinheiro';
+      document.getElementById('gastoCartaoBloco').style.display = 'none';
+      document.getElementById('gastoCartaoSelect').value = '';
       abrirModal('modalGasto');
+    });
+
+    // Mostra/esconde o seletor de cartão conforme a forma de pagamento
+    document.getElementById('gastoForma').addEventListener('change', (e) => {
+      const bloco = document.getElementById('gastoCartaoBloco');
+      if (e.target.value === 'Cartão Crédito') {
+        popularSelectCartoes();
+        bloco.style.display = 'block';
+      } else {
+        bloco.style.display = 'none';
+      }
+    });
+
+    // Cadastrar novo cartão direto no seletor
+    document.getElementById('gastoCartaoSelect').addEventListener('change', async (e) => {
+      if (e.target.value === '__novo__') {
+        const nome = prompt('Nome do cartão (ex: Visa, Master, Nubank):');
+        if (!nome || !nome.trim()) {
+          e.target.value = '';
+          return;
+        }
+        const dia = prompt(`Dia de vencimento da fatura do cartão "${nome.trim()}" (1 a 31):`);
+        const diaNum = parseInt(dia);
+        if (!diaNum || diaNum < 1 || diaNum > 31) {
+          alert('Dia inválido. Cadastro cancelado.');
+          e.target.value = '';
+          return;
+        }
+        const ok = await executarAcao({
+          action: 'adicionar_cartao',
+          identificacao: nome.trim(),
+          dia_vencimento: diaNum
+        });
+        if (ok) {
+          popularSelectCartoes();
+          // Seleciona o cartão recém-criado
+          const opts = [...e.target.options];
+          const criado = opts.find(o => o.textContent.startsWith(nome.trim() + ' '));
+          if (criado) e.target.value = criado.value;
+        }
+      }
     });
 
     document.getElementById('btnConfirmarGasto').addEventListener('click', async () => {
@@ -803,34 +954,54 @@
       const valor = parseFloat(document.getElementById('gastoValor').value);
       const forma = document.getElementById('gastoForma').value;
       const parcelas = parseInt(document.getElementById('gastoParcelas').value);
+      const data = document.getElementById('gastoData').value || getHojeISO();
       
       if (!ident || !valor || valor <= 0) {
         alert('Preencha todos os campos corretamente.');
         return;
       }
 
+      let cartaoNome = '';
+      let cartaoDia = '';
+      if (forma === 'Cartão Crédito') {
+        const select = document.getElementById('gastoCartaoSelect');
+        if (!select.value || select.value === '__novo__') {
+          alert('Selecione ou cadastre um cartão.');
+          return;
+        }
+        const [nome, dia] = select.value.split('|');
+        cartaoNome = nome;
+        cartaoDia = dia;
+      }
+
       fecharModal('modalGasto');
       
       const valorParcela = valor / parcelas;
-      let msg = `Adicionar "${ident}" no valor total de ${formatarMoeda(valor)}`;
+      let msg = `Adicionar "${ident}" no valor total de ${formatarMoeda(valor)} em ${formatarDataBR(data)}`;
       if (parcelas > 1) {
         msg += ` em ${parcelas}x de ${formatarMoeda(valorParcela)}`;
       }
       
       document.getElementById('confirmacaoMsg').textContent = msg;
-      document.getElementById('confirmacaoSaldo').textContent = formatarMoeda(saldoBanco - valor);
+      document.getElementById('confirmacaoSaldo').textContent = formatarMoeda(saldoBanco - valorParcela);
       
       abrirModal('modalConfirmacao');
       
       document.getElementById('btnConfirmacaoOk').onclick = async () => {
         fecharModal('modalConfirmacao');
-        await executarAcao({
+        const payload = {
           action: 'adicionar_gasto',
           identificacao: ident,
           valor: valor,
           forma_pagamento: forma,
-          parcelas: parcelas
-        });
+          parcelas: parcelas,
+          data: data
+        };
+        if (cartaoNome) {
+          payload.cartao_nome = cartaoNome;
+          payload.cartao_vencimento_dia = cartaoDia;
+        }
+        await executarAcao(payload);
       };
       
       document.getElementById('btnConfirmacaoCorrigir').onclick = () => {
@@ -888,6 +1059,7 @@
       document.getElementById('dividaIdent').value = '';
       document.getElementById('dividaValor').value = '';
       document.getElementById('dividaMeses').value = '';
+      document.getElementById('dividaData').value = getHojeISO();
       abrirModal('modalDivida');
     });
 
@@ -895,6 +1067,7 @@
       const ident = document.getElementById('dividaIdent').value.trim();
       const valor = parseFloat(document.getElementById('dividaValor').value);
       const meses = parseInt(document.getElementById('dividaMeses').value);
+      const data = document.getElementById('dividaData').value || getHojeISO();
       
       if (!ident || !valor || valor <= 0 || !meses || meses <= 0) {
         alert('Preencha todos os campos corretamente.');
@@ -904,7 +1077,7 @@
       fecharModal('modalDivida');
       
       document.getElementById('confirmacaoMsg').textContent = 
-        `Adicionar dívida "${ident}" de ${formatarMoeda(valor)}/mês por ${meses} meses. Total: ${formatarMoeda(valor * meses)}`;
+        `Adicionar dívida "${ident}" de ${formatarMoeda(valor)}/mês por ${meses} meses a partir de ${formatarDataBR(data)}. Total: ${formatarMoeda(valor * meses)}`;
       document.getElementById('confirmacaoSaldo').textContent = formatarMoeda(saldoBanco - valor);
       
       abrirModal('modalConfirmacao');
@@ -915,7 +1088,8 @@
           action: 'adicionar_divida',
           identificacao: ident,
           valor_parcela: valor,
-          meses_restantes: meses
+          meses_restantes: meses,
+          data: data
         });
       };
       
@@ -1009,6 +1183,53 @@
         abrirModal('modalAjustarInvestimento');
         document.getElementById('ajusteInvestValor').focus();
       };
+    });
+
+    // Dívidas do Mês (ordenadas por dia, com status pago/pendente)
+    document.getElementById('btnDividasMes').addEventListener('click', () => {
+      const mesAtual = getMesAtual();
+      const hojeStr = getHojeISO();
+      const hojeDia = parseInt(hojeStr.substring(8, 10));
+
+      const doMes = dados.filter(item =>
+        (item.tipo === 'gasto' || item.tipo === 'divida') &&
+        item.mes_referencia === mesAtual
+      );
+
+      // Extrai o dia de cada item a partir da data completa e ordena por ele
+      const comDia = doMes.map(item => {
+        const dataStr = (item.data || '').substring(0, 10); // "YYYY-MM-DD"
+        const dia = dataStr ? parseInt(dataStr.substring(8, 10)) : 1;
+        return { ...item, _dia: dia, _pago: dia <= hojeDia };
+      }).sort((a, b) => a._dia - b._dia);
+
+      const container = document.getElementById('dividasMesLista');
+
+      if (comDia.length === 0) {
+        container.innerHTML = '<p style="color:#888;text-align:center;padding:20px 0;">Nenhuma dívida ou gasto parcelado neste mês.</p>';
+      } else {
+        const totalMes = comDia.reduce((sum, i) => sum + i.valor, 0);
+        const totalPago = comDia.filter(i => i._pago).reduce((sum, i) => sum + i.valor, 0);
+        const totalPendente = totalMes - totalPago;
+
+        let html = `<div style="display:flex;justify-content:space-between;font-size:13px;color:#666;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #eee;">
+          <span>✅ Já saiu: <strong style="color:#2e7d32;">${formatarMoeda(totalPago)}</strong></span>
+          <span>⏳ Ainda vem: <strong style="color:#e65100;">${formatarMoeda(totalPendente)}</strong></span>
+        </div>`;
+
+        comDia.forEach(item => {
+          const parcelaTxt = item.parcelas_total > 1 ? ` (${item.parcela_atual}/${item.parcelas_total})` : '';
+          const statusIcone = item._pago ? '✅' : '⏳';
+          const cor = item._pago ? '#888' : '#1a1a2e';
+          html += `<div style="display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:8px 0;border-bottom:1px solid #f5f5f5;">
+            <span style="color:${cor};">${statusIcone} Dia ${item._dia} — ${item.identificacao}${parcelaTxt}</span>
+            <span style="font-weight:600;color:${cor};">${formatarMoeda(item.valor)}</span>
+          </div>`;
+        });
+        container.innerHTML = html;
+      }
+
+      abrirModal('modalDividasMes');
     });
 
     // Previsões
@@ -1181,6 +1402,45 @@
     function getMesAtual() {
       const d = new Date();
       return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    }
+
+    // Retorna a data de hoje no formato "YYYY-MM-DD" (para preencher os inputs type="date")
+    function getHojeISO() {
+      const d = new Date();
+      const ano = d.getFullYear();
+      const mes = String(d.getMonth() + 1).padStart(2, '0');
+      const dia = String(d.getDate()).padStart(2, '0');
+      return `${ano}-${mes}-${dia}`;
+    }
+
+    // Formata "YYYY-MM-DD" como "DD/MM/AAAA"
+    function formatarDataBR(dataStr) {
+      if (!dataStr) return '';
+      const [ano, mes, dia] = dataStr.split('-');
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    // Preenche o <select> de cartões com os cartões já cadastrados (tipo 'cartao')
+    function popularSelectCartoes() {
+      const select = document.getElementById('gastoCartaoSelect');
+      const valorAtual = select.value;
+      const cartoes = dados.filter(d => d.tipo === 'cartao');
+
+      select.innerHTML = '<option value="">Selecione...</option>';
+      cartoes.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = `${c.identificacao}|${c.valor}`;
+        opt.textContent = `${c.identificacao} (vence dia ${c.valor})`;
+        select.appendChild(opt);
+      });
+      const optNovo = document.createElement('option');
+      optNovo.value = '__novo__';
+      optNovo.textContent = '+ Cadastrar novo cartão';
+      select.appendChild(optNovo);
+
+      if ([...select.options].some(o => o.value === valorAtual)) {
+        select.value = valorAtual;
+      }
     }
 
     // ============================================================
