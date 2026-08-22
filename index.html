@@ -743,17 +743,20 @@
         }
       });
 
-      // Máximo para as barras (baseado no maior valor)
-      const maxValor = Math.max(totalEntradas, totalGastos, totalDividas, totalInvestimentosPatrimonio, 1);
+      // Régua das barras: entrada/gasto/dívida se comparam entre si (fluxo do mês).
+      // Investimento é patrimônio acumulado - não pode competir na mesma régua,
+      // senão engole as outras 3 barras (era esse o bug: só ele "subia").
+      const maxMensal = Math.max(totalEntradas, totalGastos, totalDividas, 1);
+      const maxInvest = Math.max(totalInvestimentosPatrimonio * 1.2, 1000);
 
       // Termômetro do saldo (escala baseada no fluxo mensal de entradas/saídas)
       atualizarTermometro(saldoBanco, totalEntradas, totalGastos + totalDividas);
 
       // Atualizar barras
-      atualizarBarra('barraEntradaValor', 'barraEntradaFill', totalEntradas, maxValor, 'verde');
-      atualizarBarra('barraGastoValor', 'barraGastoFill', totalGastos, maxValor, 'vermelho');
-      atualizarBarra('barraDividaValor', 'barraDividaFill', totalDividas, maxValor, 'laranja');
-      atualizarBarra('barraInvestimentoValor', 'barraInvestimentoFill', totalInvestimentosPatrimonio, maxValor, 'azul');
+      atualizarBarra('barraEntradaValor', 'barraEntradaFill', totalEntradas, maxMensal, 'verde');
+      atualizarBarra('barraGastoValor', 'barraGastoFill', totalGastos, maxMensal, 'vermelho');
+      atualizarBarra('barraDividaValor', 'barraDividaFill', totalDividas, maxMensal, 'laranja');
+      atualizarBarra('barraInvestimentoValor', 'barraInvestimentoFill', totalInvestimentosPatrimonio, maxInvest, 'azul');
 
       // Lista de lançamentos (últimos 50)
       renderizarLista();
@@ -772,11 +775,14 @@
     function atualizarTermometro(saldo, totalEntradasMes, totalSaidasMes) {
       const fill = document.getElementById('termometroFill');
       const ZERO = 33.333;
+      const PISO_ESCALA = 50000;
+      const TETO_ESCALA = 100000;
 
-      // Escala dinâmica baseada no fluxo mensal, com piso mínimo pra não ficar
-      // sensível demais quando ainda não há lançamentos.
-      const escalaPositiva = Math.max(totalEntradasMes * 1.5, 1000);
-      const escalaNegativa = Math.max(totalSaidasMes * 1.5, 1000);
+      // Escala dinâmica baseada no fluxo mensal, mas sempre entre 50k e 100k -
+      // assim a barra nunca fica "sensível demais" (parecendo vazia com pouco
+      // dinheiro) nem esticada demais (parecendo sempre cheia).
+      const escalaPositiva = Math.min(Math.max(totalEntradasMes * 1.5, PISO_ESCALA), TETO_ESCALA);
+      const escalaNegativa = Math.min(Math.max(totalSaidasMes * 1.5, PISO_ESCALA), TETO_ESCALA);
 
       if (saldo >= 0) {
         const fracao = Math.min(saldo / escalaPositiva, 1);
